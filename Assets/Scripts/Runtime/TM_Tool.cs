@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class TM_Tool : MonoBehaviour
 {
-    float pointRetrievingDelay = 1, rotationCheckDelay = 1;
+    float pointRetrievingDelay = .5f, rotationCheckDelay = 1;
+    int pointMaxRetrieving = 10;
 
     List<Vector3> points = new List<Vector3>();
 
@@ -25,14 +26,24 @@ public class TM_Tool : MonoBehaviour
     {
         for(;;)
         {
-            points.Add(transform.position);
+            if (points.Count > pointMaxRetrieving)
+            {
+                points.Clear();
+            }
+            else
+            {
+                points.Add(transform.position);
+            }
             yield return new WaitForSeconds(pointRetrievingDelay);
         }
     }
 
     IEnumerator CheckRotation()
     {
-        yield return new WaitForSeconds(rotationCheckDelay);
+        for(;;)
+        {
+            yield return new WaitForSeconds(rotationCheckDelay);
+        }
     }
 
     private void OnDrawGizmos()
