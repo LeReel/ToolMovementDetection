@@ -36,12 +36,11 @@ public class TM_Tool : MonoBehaviour
         StartCoroutine(nameof(RetrieveMovementPoints));
         StartCoroutine(nameof(CheckRotation));
 
-        onCorrectMovementDone += ToolBehaviour;
-    }
-
-    private void Update()
-    {
-        Debug.Log($"{points.Count}");
+        onCorrectMovementDone += () =>
+        {
+            points.Clear();
+            ToolBehaviour();
+        };
     }
 
     IEnumerator RetrieveMovementPoints()
@@ -50,27 +49,25 @@ public class TM_Tool : MonoBehaviour
         {
             if (points.Count > pointMaxRetrieving)
             {
+                IsDoingMovement();
                 ClearPoints();
             }
             else
             {
-                IsDoingMovement("UPWARD");
-                IsDoingMovement("DOWNWARD");
-                IsDoingMovement("RIGHTWARD");
-                IsDoingMovement("LEFTWARD");
-                //if (_p != prevPoint)
-                //{
-                //    
-                //    else
-                //    {
-                //        points.Add(_p);
-                //        prevPoint = _p;
-                //    }
-                //}
+                Vector3 _p = transform.position;
+                if (_p != prevPoint)
+                {
+                    points.Add(_p);
+                    CheckIfPointIsInMovement();
+                }
             }
 
             yield return new WaitForSeconds(pointRetrievingDelay);
         }
+    }
+
+    void CheckIfPointIsInMovement()
+    {
     }
 
     IEnumerator CheckRotation()
@@ -81,54 +78,44 @@ public class TM_Tool : MonoBehaviour
         }
     }
 
-    bool IsDoingMovement(string _axis)
+    void IsDoingMovement()
     {
-        Vector3 _p = transform.position;
-        if(_p != prevPoint)
+        for (int i = 0; i < points.Count - 1; i++)
         {
-            switch (_axis)
+            Vector3 _currentP = points[i], _nextP = points[i + 1];
+
+            if (axisesArray.UPWARD)
             {
-                case "UPWARD":
-                    if(axisesArray.UPWARD)
-                    {
-                        if (_p.y < prevPoint.y)
-                        {
-                            ClearPoints();
-                        }
-                    }
-                    break;
-                case "DOWNWARD":
-                    if(axisesArray.DOWNWARD)
-                    {
-                        if (_p.y > prevPoint.y)
-                        {
-                            ClearPoints();
-                        }
-                    }
-                    break;
-                case "LEFTWARD":
-                    if(axisesArray.LEFTWARD)
-                    {
-                        if (_p.x > prevPoint.x)
-                        {
-                            ClearPoints();
-                        }
-                    }
-                    break;
-                case "RIGHTWARD":
-                    if(axisesArray.RIGHTWARD)
-                    {
-                        if (_p.x < prevPoint.x)
-                        {
-                            ClearPoints();
-                        }
-                    }
-                    break;
+                if (_currentP.y > _nextP.y && !axisesArray.DOWNWARD)
+                {
+                    return;
+                }
+            }
+            if (axisesArray.DOWNWARD)
+            {
+                if (_currentP.y < _nextP.y && !axisesArray.UPWARD)
+                {
+                    return;
+                }
+            }
+
+            if (axisesArray.LEFTWARD)
+            {
+                if (_currentP.x < _nextP.x && !axisesArray.RIGHTWARD)
+                {
+                    return;
+                }
+            }
+            if (axisesArray.RIGHTWARD)
+            {
+                if (_currentP.x > _nextP.x && !axisesArray.LEFTWARD)
+                {
+                    return;
+                }
             }
         }
-
-        ClearPoints();
-        return false;
+        
+        onCorrectMovementDone?.Invoke();
     }
 
     void ClearPoints()
@@ -139,6 +126,7 @@ public class TM_Tool : MonoBehaviour
 
     void ToolBehaviour()
     {
+        Debug.Log("Tool Behaviour");
     }
 
     private void OnDrawGizmos()

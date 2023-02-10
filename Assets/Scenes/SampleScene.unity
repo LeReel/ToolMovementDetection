@@ -234,7 +234,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axisesArray:
-    UPWARD: 0
+    UPWARD: 1
     DOWNWARD: 0
     LEFTWARD: 0
     RIGHTWARD: 0
