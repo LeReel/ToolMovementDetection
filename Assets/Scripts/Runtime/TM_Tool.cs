@@ -18,13 +18,28 @@ public struct ToolAxisesArray
     }
 }
 
+public struct MovementChecker
+{
+    private Vector3 currentPosition, nextPosition;
+
+    public MovementChecker(Vector3 _current,Vector3 _next)
+    {
+        currentPosition = _current;
+        nextPosition = _next;
+    }
+
+    public bool IsLeft => currentPosition.x > nextPosition.x;
+    public bool IsRight => currentPosition.x < nextPosition.x;
+    public bool IsUp => currentPosition.y > nextPosition.y;
+    public bool IsDown => currentPosition.y < nextPosition.y;
+}
+
 public class TM_Tool : MonoBehaviour
 {
     public event Action onCorrectMovementDone;
 
     float pointRetrievingDelay = .1f, rotationCheckDelay = 1;
     int pointMaxRetrieving = 10;
-
 
     List<Vector3> points = new List<Vector3>();
     Vector3 prevPoint = Vector3.zero;
@@ -34,7 +49,6 @@ public class TM_Tool : MonoBehaviour
     void Start()
     {
         StartCoroutine(nameof(RetrieveMovementPoints));
-        StartCoroutine(nameof(CheckRotation));
 
         onCorrectMovementDone += () =>
         {
@@ -58,65 +72,67 @@ public class TM_Tool : MonoBehaviour
                 if (_p != prevPoint)
                 {
                     points.Add(_p);
-                    CheckIfPointIsInMovement();
                 }
             }
 
             yield return new WaitForSeconds(pointRetrievingDelay);
         }
     }
-
-    void CheckIfPointIsInMovement()
-    {
-    }
-
-    IEnumerator CheckRotation()
-    {
-        for (;;)
-        {
-            yield return new WaitForSeconds(rotationCheckDelay);
-        }
-    }
-
+    
     void IsDoingMovement()
     {
         for (int i = 0; i < points.Count - 1; i++)
         {
             Vector3 _currentP = points[i], _nextP = points[i + 1];
-
-            if (axisesArray.UPWARD)
+            
+            if(!CheckIfPointIsInMovement(_currentP, _nextP))
             {
-                if (_currentP.y > _nextP.y && !axisesArray.DOWNWARD)
-                {
-                    return;
-                }
-            }
-            if (axisesArray.DOWNWARD)
-            {
-                if (_currentP.y < _nextP.y && !axisesArray.UPWARD)
-                {
-                    return;
-                }
-            }
-
-            if (axisesArray.LEFTWARD)
-            {
-                if (_currentP.x < _nextP.x && !axisesArray.RIGHTWARD)
-                {
-                    return;
-                }
-            }
-            if (axisesArray.RIGHTWARD)
-            {
-                if (_currentP.x > _nextP.x && !axisesArray.LEFTWARD)
-                {
-                    return;
-                }
+                return;
             }
         }
-        
+
         onCorrectMovementDone?.Invoke();
     }
+
+    bool CheckIfPointIsInMovement(Vector3 _currentPos, Vector3 _nextPos)
+    {
+        MovementChecker _mc = new MovementChecker(_currentPos, _nextPos);
+
+        if (axisesArray.DOWNWARD)
+        {
+            if (_mc.IsUp && !axisesArray.UPWARD)
+            {
+                return false;
+            }
+        }
+
+        if (axisesArray.UPWARD)
+        {
+            if (_mc.IsDown && !axisesArray.DOWNWARD)
+            {
+                return false;
+            }
+        }
+
+        if (axisesArray.RIGHTWARD)
+        {
+            if (_mc.IsLeft && !axisesArray.LEFTWARD)
+            {
+                return false;
+            }
+        }
+
+        if (axisesArray.LEFTWARD)
+        {
+            if (_mc.IsRight && !axisesArray.RIGHTWARD)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 
     void ClearPoints()
     {
