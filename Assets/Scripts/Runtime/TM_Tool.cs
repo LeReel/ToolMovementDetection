@@ -5,24 +5,19 @@ using Unity.Collections;
 using UnityEngine;
 
 [Serializable]
-public struct ToolAxisesArray
+struct ToolAxisesArray
 {
-    [SerializeField] public bool UPWARD;
-    [SerializeField] public bool DOWNWARD;
-    [SerializeField] public bool LEFTWARD;
-    [SerializeField] public bool RIGHTWARD;
-
-    public ToolAxisesArray(bool _value)
-    {
-        UPWARD = DOWNWARD = LEFTWARD = RIGHTWARD = _value;
-    }
+    public bool UPWARD;
+    public bool DOWNWARD;
+    public bool LEFTWARD;
+    public bool RIGHTWARD;
 }
 
 public struct MovementChecker
 {
     private Vector3 currentPosition, nextPosition;
 
-    public MovementChecker(Vector3 _current,Vector3 _next)
+    public void SetCurrentAndNext(Vector3 _current, Vector3 _next)
     {
         currentPosition = _current;
         nextPosition = _next;
@@ -30,21 +25,23 @@ public struct MovementChecker
 
     public bool IsLeft => currentPosition.x > nextPosition.x;
     public bool IsRight => currentPosition.x < nextPosition.x;
-    public bool IsUp => currentPosition.y > nextPosition.y;
-    public bool IsDown => currentPosition.y < nextPosition.y;
+    public bool IsUp => currentPosition.y < nextPosition.y;
+    public bool IsDown => currentPosition.y > nextPosition.y;
 }
 
 public class TM_Tool : MonoBehaviour
 {
     public event Action onCorrectMovementDone;
 
-    float pointRetrievingDelay = .1f, rotationCheckDelay = 1;
-    int pointMaxRetrieving = 10;
+    [SerializeField] float pointRetrievingDelay = .1f;
+    [SerializeField] int pointMaxRetrieving = 10;
 
     List<Vector3> points = new List<Vector3>();
     Vector3 prevPoint = Vector3.zero;
-
-    [SerializeField] ToolAxisesArray axisesArray = new ToolAxisesArray(false);
+    
+    MovementChecker movementChecker;
+    
+    [SerializeField] ToolAxisesArray axisesArray;
 
     void Start()
     {
@@ -63,7 +60,7 @@ public class TM_Tool : MonoBehaviour
         {
             if (points.Count > pointMaxRetrieving)
             {
-                IsDoingMovement();
+                CheckToolMovement();
                 ClearPoints();
             }
             else
@@ -78,14 +75,14 @@ public class TM_Tool : MonoBehaviour
             yield return new WaitForSeconds(pointRetrievingDelay);
         }
     }
-    
-    void IsDoingMovement()
+
+    void CheckToolMovement()
     {
         for (int i = 0; i < points.Count - 1; i++)
         {
             Vector3 _currentP = points[i], _nextP = points[i + 1];
-            
-            if(!CheckIfPointIsInMovement(_currentP, _nextP))
+
+            if (!CheckIfPointIsInMovement(_currentP, _nextP))
             {
                 return;
             }
@@ -96,41 +93,65 @@ public class TM_Tool : MonoBehaviour
 
     bool CheckIfPointIsInMovement(Vector3 _currentPos, Vector3 _nextPos)
     {
-        MovementChecker _mc = new MovementChecker(_currentPos, _nextPos);
+        movementChecker.SetCurrentAndNext(_currentPos,_nextPos);
 
-        if (axisesArray.DOWNWARD)
-        {
-            if (_mc.IsUp && !axisesArray.UPWARD)
-            {
-                return false;
-            }
-        }
+        // if (axisesArray.DOWNWARD)
+        // {
+        //     if (_mc.IsUp && !axisesArray.UPWARD)
+        //     {
+        //         return false;
+        //     }
+        // }
+        //
+        // if (axisesArray.UPWARD)
+        // {
+        //     if (_mc.IsDown && !axisesArray.DOWNWARD)
+        //     {
+        //         return false;
+        //     }
+        // }
+        //
+        // if (axisesArray.RIGHTWARD)
+        // {
+        //     if (_mc.IsLeft && !axisesArray.LEFTWARD)
+        //     {
+        //         return false;
+        //     }
+        // }
+        //
+        // if (axisesArray.LEFTWARD)
+        // {
+        //     if (_mc.IsRight && !axisesArray.RIGHTWARD)
+        //     {
+        //         return false;
+        //     }
+        // }
+        // return true;
 
-        if (axisesArray.UPWARD)
-        {
-            if (_mc.IsDown && !axisesArray.DOWNWARD)
-            {
-                return false;
-            }
-        }
 
-        if (axisesArray.RIGHTWARD)
-        {
-            if (_mc.IsLeft && !axisesArray.LEFTWARD)
-            {
-                return false;
-            }
-        }
+        // if (_mc.IsUp && axisesArray.UPWARD)
+        // {
+        //     return true;
+        // }
+        // if (_mc.IsDown && axisesArray.DOWNWARD)
+        // {
+        //     return true;
+        // }
+        // if (_mc.IsRight && axisesArray.RIGHTWARD)
+        // {
+        //     return true;
+        // }
+        // if (_mc.IsLeft && axisesArray.LEFTWARD)
+        // {
+        //     return true;
+        // }
+        //
+        // return false;
 
-        if (axisesArray.LEFTWARD)
-        {
-            if (_mc.IsRight && !axisesArray.RIGHTWARD)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return (movementChecker.IsUp && axisesArray.UPWARD) ||
+               (movementChecker.IsDown && axisesArray.DOWNWARD) ||
+               (movementChecker.IsRight && axisesArray.RIGHTWARD) ||
+               (movementChecker.IsLeft && axisesArray.LEFTWARD);
     }
 
 

@@ -233,6 +233,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6cf3e19335d07f4190bf422c4caceea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pointRetrievingDelay: 0.01
+  pointMaxRetrieving: 5
   axisesArray:
     UPWARD: 1
     DOWNWARD: 0
