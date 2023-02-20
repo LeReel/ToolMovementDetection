@@ -34,7 +34,7 @@ public class TM_Tool : MonoBehaviour
     public event Action onCorrectMovementDone;
 
     [SerializeField] float pointRetrievingDelay = .1f;
-    [SerializeField] int pointMaxRetrieving = 10;
+    [SerializeField] int pointMaxRetrieving = 10, pointAmountBeforeTriggering = 10;
 
     List<Vector3> points = new List<Vector3>();
     Vector3 prevPoint = Vector3.zero;
@@ -58,17 +58,18 @@ public class TM_Tool : MonoBehaviour
     {
         for (;;)
         {
-            if (points.Count > pointMaxRetrieving)
+            Vector3 _p = transform.position;
+            if(_p != prevPoint)
             {
-                CheckToolMovement();
-                ClearPoints();
-            }
-            else
-            {
-                Vector3 _p = transform.position;
-                if (_p != prevPoint)
+                prevPoint = _p;
+                points.Add(_p);
+                if (points.Count > pointMaxRetrieving)
                 {
-                    points.Add(_p);
+                    points.Clear();
+                }
+                else if (points.Count > pointAmountBeforeTriggering)
+                {
+                    CheckToolMovement();
                 }
             }
 
