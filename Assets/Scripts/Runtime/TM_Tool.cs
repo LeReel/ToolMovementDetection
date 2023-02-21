@@ -33,24 +33,44 @@ public class TM_Tool : MonoBehaviour
 {
     public event Action onCorrectMovementDone;
 
-    [SerializeField] float pointRetrievingDelay = .1f;
-    [SerializeField] int pointMaxRetrieving = 10, pointAmountBeforeTriggering = 10;
+    [Header("Tool Behaviour")] [SerializeField]
+    protected float sphereCastRadius = 5;
 
-    List<Vector3> points = new List<Vector3>();
-    Vector3 prevPoint = Vector3.zero;
-    
-    MovementChecker movementChecker;
-    
+    [SerializeField] protected LayerMask hitLayers;
+
+    [Header("Movement Checking")] [SerializeField]
+    protected float pointRetrievingDelay = .1f;
+
+    [SerializeField] protected int pointMaxRetrieving = 10, pointAmountBeforeTriggering = 5;
     [SerializeField] ToolAxisesArray axisesArray;
+
+    protected List<Vector3> points = new List<Vector3>();
+    protected Vector3 prevPoint = Vector3.zero;
+
+    protected MovementChecker movementChecker;
 
     void Start()
     {
         StartCoroutine(nameof(RetrieveMovementPoints));
-
+        
         onCorrectMovementDone += () =>
         {
+            RaycastHit _hit;
+            bool _hasHit = Physics.SphereCast(
+                transform.position,
+                sphereCastRadius,
+                transform.forward,
+                out _hit,
+                1,
+                hitLayers,
+                QueryTriggerInteraction.UseGlobal);
+        
+            if (_hasHit)
+            {
+                ToolBehaviour();
+            }
+        
             points.Clear();
-            ToolBehaviour();
         };
     }
 
@@ -59,7 +79,7 @@ public class TM_Tool : MonoBehaviour
         for (;;)
         {
             Vector3 _p = transform.position;
-            if(_p != prevPoint)
+            if (_p != prevPoint)
             {
                 prevPoint = _p;
                 points.Add(_p);
@@ -72,6 +92,14 @@ public class TM_Tool : MonoBehaviour
                     CheckToolMovement();
                 }
             }
+            else
+            {
+                if (points.Count > 0 && points.Count > pointAmountBeforeTriggering)
+                {
+                    //CheckToolMovement();
+                    points.Clear();
+                }
+            }
 
             yield return new WaitForSeconds(pointRetrievingDelay);
         }
@@ -79,75 +107,26 @@ public class TM_Tool : MonoBehaviour
 
     void CheckToolMovement()
     {
-        for (int i = 0; i < points.Count - 1; i++)
+        for (int i = 0, j = points.Count - 1; j > 0; i++, j--)
         {
-            Vector3 _currentP = points[i], _nextP = points[i + 1];
+            Vector3 _currentP = points[j - 1], _nextP = points[j];
 
             if (!CheckIfPointIsInMovement(_currentP, _nextP))
             {
                 return;
             }
-        }
 
-        onCorrectMovementDone?.Invoke();
+            if (i > pointAmountBeforeTriggering)
+            {
+                onCorrectMovementDone?.Invoke();
+                break;
+            }
+        }
     }
 
     bool CheckIfPointIsInMovement(Vector3 _currentPos, Vector3 _nextPos)
     {
-        movementChecker.SetCurrentAndNext(_currentPos,_nextPos);
-
-        // if (axisesArray.DOWNWARD)
-        // {
-        //     if (_mc.IsUp && !axisesArray.UPWARD)
-        //     {
-        //         return false;
-        //     }
-        // }
-        //
-        // if (axisesArray.UPWARD)
-        // {
-        //     if (_mc.IsDown && !axisesArray.DOWNWARD)
-        //     {
-        //         return false;
-        //     }
-        // }
-        //
-        // if (axisesArray.RIGHTWARD)
-        // {
-        //     if (_mc.IsLeft && !axisesArray.LEFTWARD)
-        //     {
-        //         return false;
-        //     }
-        // }
-        //
-        // if (axisesArray.LEFTWARD)
-        // {
-        //     if (_mc.IsRight && !axisesArray.RIGHTWARD)
-        //     {
-        //         return false;
-        //     }
-        // }
-        // return true;
-
-
-        // if (_mc.IsUp && axisesArray.UPWARD)
-        // {
-        //     return true;
-        // }
-        // if (_mc.IsDown && axisesArray.DOWNWARD)
-        // {
-        //     return true;
-        // }
-        // if (_mc.IsRight && axisesArray.RIGHTWARD)
-        // {
-        //     return true;
-        // }
-        // if (_mc.IsLeft && axisesArray.LEFTWARD)
-        // {
-        //     return true;
-        // }
-        //
-        // return false;
+        movementChecker.SetCurrentAndNext(_currentPos, _nextPos);
 
         return (movementChecker.IsUp && axisesArray.UPWARD) ||
                (movementChecker.IsDown && axisesArray.DOWNWARD) ||
@@ -178,5 +157,7 @@ public class TM_Tool : MonoBehaviour
                 Gizmos.DrawSphere(points[i], .1f);
             }
         }
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, sphereCastRadius);
     }
 }
